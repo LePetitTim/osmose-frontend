@@ -38,7 +38,7 @@ def _class(db, lang):
         class
     """
     db.execute(sql)
-    return map(lambda r: dict(zip(["item", "class", "title", "level", "tags"], r)), db.fetchall())
+    return [dict(list(zip(["item", "class", "title", "level", "tags"], r))) for r in db.fetchall()]
 
 
 def _items(db, lang):
@@ -77,7 +77,7 @@ def _countries_3(db):
         country
     """
     db.execute(sql)
-    return map(lambda x: x[0], db.fetchall())
+    return [x[0] for x in db.fetchall()]
 
 
 def _categories(db, lang):
@@ -108,7 +108,7 @@ def _categories(db, lang):
         if result == [] or result[-1]["categ"] != res["categ"]:
             ret = {"categ":res["categ"], "menu": "no translation", "item": []}
             result.append(ret)
-            ret["menu_lang"] = {k: v for k, v in res["categ_menu"].iteritems() if v}
+            ret["menu_lang"] = {k: v for k, v in res["categ_menu"].items() if v}
             for l in lang:
                 if l in res["categ_menu"]:
                     ret["menu"] = res["categ_menu"][l]
@@ -132,7 +132,7 @@ def _items_3(db):
         categ
     """
     db.execute(sql)
-    categs = map(lambda r: dict(zip(['categ', 'title'], r)), db.fetchall())
+    categs = [dict(list(zip(['categ', 'title'], r))) for r in db.fetchall()]
 
     sql = """
     SELECT
@@ -149,15 +149,15 @@ def _items_3(db):
         item
     """
     db.execute(sql)
-    items = map(lambda r: dict(zip(['item', 'categ', 'color', 'title', 'levels', 'number', 'tags'], r)), db.fetchall())
-    items = map(lambda r: {
+    items = [dict(list(zip(['item', 'categ', 'color', 'title', 'levels', 'number', 'tags'], r))) for r in db.fetchall()]
+    items = [{
         'item': r['item'],
         'categ': r['categ'],
         'color': r['color'],
         'title': r['title'] or {'en': '(name missing)'},
-        'levels': r['number'] and map(lambda (l, n): {'level': l, 'count': n}, zip(r['levels'], r['number'])) or map(lambda i: {'level': i, 'count': 0}, [1, 2, 3]),
+        'levels': r['number'] and [{'level': l_n[0], 'count': l_n[1]} for l_n in zip(r['levels'], r['number'])] or [{'level': i, 'count': 0} for i in [1, 2, 3]],
         'tags': r['tags']
-    }, items)
+    } for r in items]
     items_categ = defaultdict(list)
     for i in items:
         items_categ[i['categ']].append(i)
@@ -176,21 +176,17 @@ def _items_3(db):
         class
     """
     db.execute(sql)
-    classs = map(lambda r: dict(zip(['item', 'class', 'title', 'level', 'tags'], r)), db.fetchall())
+    classs = [dict(list(zip(['item', 'class', 'title', 'level', 'tags'], r))) for r in db.fetchall()]
     class_item = defaultdict(list)
     for c in classs:
         class_item[c['item']].append(c)
 
-    return map(lambda categ:
-        dict(
+    return [dict(
             categ,
-            **{'items': map(lambda item:
-                dict(
+            **{'items': [dict(
                     item,
-                    **{'class': class_item[item['item']]}),
-                items_categ[categ['categ']])}
-        ),
-        categs)
+                    **{'class': class_item[item['item']]}) for item in items_categ[categ['categ']]]}
+        ) for categ in categs]
 
 
 def _tags(db):
@@ -210,4 +206,4 @@ def _tags(db):
         tag
     """
     db.execute(sql)
-    return map(lambda x: x[0], db.fetchall())
+    return [x[0] for x in db.fetchall()]

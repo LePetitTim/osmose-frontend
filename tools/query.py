@@ -141,7 +141,7 @@ def _build_param(bbox, source, item, level, users, classs, country, useDevItem, 
         where.append("class.level IN (%s)" % level)
 
     if classs:
-        where.append("marker.class IN (%s)" % ','.join(map(lambda c: str(int(c)), classs.split(','))))
+        where.append("marker.class IN (%s)" % ','.join([str(int(c)) for c in classs.split(',')]))
 
     if bbox:
         where.append("marker.lat BETWEEN %f AND %f AND marker.lon BETWEEN %f AND %f" % (bbox[1], bbox[3], bbox[0], bbox[2]))
@@ -227,7 +227,7 @@ def _params(max_limit=500):
             params.level = "1,2,3"
     if params.bbox:
         try:
-            params.bbox = map(lambda x: float(x), params.bbox.split(','))
+            params.bbox = [float(x) for x in params.bbox.split(',')]
         except:
             params.bbox = None
     if params.users:
@@ -336,7 +336,7 @@ def _count(db, params, by, extraFrom=[], extraFields=[], orderBy=False):
         summary = True
         countField = [ "SUM(marker.count) AS count" ]
 
-    byTable = set(map(lambda x: x.split('.')[0], by) + extraFrom)
+    byTable = set([x.split('.')[0] for x in by] + extraFrom)
     sqlbase  = """
     SELECT
         %s

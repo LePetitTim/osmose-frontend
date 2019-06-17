@@ -31,7 +31,7 @@ class SaxWriter(XMLGenerator):
 
     def startElement(self, name, attrs={}):
         self._write('<' + name)
-        for (name, value) in attrs.items():
+        for (name, value) in list(attrs.items()):
             self._write(' %s=%s' % (name, quoteattr(value)))
         self._write('>\n')
 
@@ -40,7 +40,7 @@ class SaxWriter(XMLGenerator):
 
     def Element(self, name, attrs={}):
         self._write('<' + name)
-        for (name, value) in attrs.items():
+        for (name, value) in list(attrs.items()):
             self._write(' %s=%s' % (name, quoteattr(value)))
         self._write(' />\n')
 

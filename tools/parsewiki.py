@@ -108,13 +108,13 @@ def parsewiki(lang):
                 errors[categ].append(line)
 
     for line in errors[0]:
-        print line
+        print(line)
 
     for categ in sorted(ref.keys()):
         print ("=%s=" % ref[categ]['menu'].encode('utf-8'))
         print ("{| class=\"wikitable sortable\" style=\"width:100%\"\n|-\n! " + header[lang] + "\n|-\n")
         for item in sorted(ref[categ]['item']):
-            print "{{Osmose Error|format={{{format|para}}}"
+            print("{{Osmose Error|format={{{format|para}}}")
             if not errors[categ].get(item):
                 errors[categ][item] = {'item': {'text': item, 'class': {}}}
             if not errors[categ][item].get('label'):
@@ -122,16 +122,16 @@ def parsewiki(lang):
             errors[categ][item]['label']['text'] = ref[categ]['item'][item]['menu'].encode('utf-8') if ref[categ]['item'][item]['menu'] else ""
             val = errors[categ][item]
             for k in ('item', 'label', 'only_for', 'detail', 'fix', 'trap', 'image'):
-                if k != 'image' and not val.has_key(k):
+                if k != 'image' and k not in val:
                     val[k] = {'text': '', 'class': {}}
-                if val.has_key(k):
-                    print ("| %s=%s" % (k, val[k]['text'])).strip()
-                    if len(ref[categ]['item'][item]['class'].keys()) > 1:
+                if k in val:
+                    print(("| %s=%s" % (k, val[k]['text'])).strip())
+                    if len(list(ref[categ]['item'][item]['class'].keys())) > 1:
                         for c in sorted(ref[categ]['item'][item]['class'].keys()):
                             if k in ('detail', 'fix'):
-                                print ("* %s %s \"%s\" : %s" % (classs[lang], c, (ref[categ]['item'][item]['class'][c] or '').encode('utf-8').replace('|', '&#124;'), val[k]['class'].get(c, '')))
-            print "}}\n"
-        print "|}\n"
+                                print(("* %s %s \"%s\" : %s" % (classs[lang], c, (ref[categ]['item'][item]['class'][c] or '').encode('utf-8').replace('|', '&#124;'), val[k]['class'].get(c, ''))))
+            print("}}\n")
+        print("|}\n")
 
 
 if __name__ == "__main__":

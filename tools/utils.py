@@ -1,42 +1,41 @@
 #! /usr/bin/env python
 #-*- coding: utf-8 -*-
 
-import os, re, Cookie
-import datetime, urllib2
+import os, re, http.cookies
+import datetime, urllib.request, urllib.error, urllib.parse
 from collections import OrderedDict
 import pwd
-import OsmSax
 
 ################################################################################
 
 languages_name = OrderedDict()
-languages_name["en"] = u"English"
+languages_name["en"] = "English"
 
 # language names from http://en.wikipedia.org/wiki/List_of_ISO_639-1_codes
-languages_name["ca"] = u"Català"
-languages_name["cs"] = u"Čeština"
-languages_name["da"] = u"Dansk"
-languages_name["de"] = u"Deutsch"
-languages_name["el"] = u"Ελληνικά"
-languages_name["es"] = u"Español"
-languages_name["fa"] = u"فارسی"
-languages_name["fi"] = u"Suomi"
-languages_name["fr"] = u"Français"
-languages_name["gl"] = u"Galego"
-languages_name["hu"] = u"Magyar"
-languages_name["it"] = u"Italiano"
-languages_name["ja"] = u"日本語"
-languages_name["lt"] = u"Lithuanian"
-languages_name["nl"] = u"Nederlands"
-languages_name["pl"] = u"Polski"
-languages_name["pt"] = u"Português"
-languages_name["pt_BR"] = u"Português (Brasil)"
-languages_name["ro"] = u"Română"
-languages_name["ru"] = u"Русский"
-languages_name["sw"] = u"Kiswahili"
-languages_name["uk"] = u"Українська"
-languages_name["zh_CN"] = u"中文 (简体)"
-languages_name["zh_TW"] = u"中文 (繁體)"
+languages_name["ca"] = "Català"
+languages_name["cs"] = "Čeština"
+languages_name["da"] = "Dansk"
+languages_name["de"] = "Deutsch"
+languages_name["el"] = "Ελληνικά"
+languages_name["es"] = "Español"
+languages_name["fa"] = "فارسی"
+languages_name["fi"] = "Suomi"
+languages_name["fr"] = "Français"
+languages_name["gl"] = "Galego"
+languages_name["hu"] = "Magyar"
+languages_name["it"] = "Italiano"
+languages_name["ja"] = "日本語"
+languages_name["lt"] = "Lithuanian"
+languages_name["nl"] = "Nederlands"
+languages_name["pl"] = "Polski"
+languages_name["pt"] = "Português"
+languages_name["pt_BR"] = "Português (Brasil)"
+languages_name["ro"] = "Română"
+languages_name["ru"] = "Русский"
+languages_name["sw"] = "Kiswahili"
+languages_name["uk"] = "Українська"
+languages_name["zh_CN"] = "中文 (简体)"
+languages_name["zh_TW"] = "中文 (繁體)"
 
 allowed_languages = list(languages_name)
 pg_host           = ""
@@ -66,21 +65,24 @@ dir_results       = "/data/work/%s/results" % (username)
 
 ################################################################################
 
+
 def get_dbconn():
     import psycopg2.extras
 #    return psycopg2.connect(host="localhost", database = pg_base, user = pg_user, password = pg_pass)
     psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
     psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
     conn = psycopg2.extras.DictConnection(db_string)
-    psycopg2.extras.register_hstore(conn, unicode=True)
+    psycopg2.extras.register_hstore(conn, str=True)
     return conn
+
 
 def pg_escape(text):
     if text is None:
         return None
     if type(text) == int:
         return str(text)
-    return text.replace(u"'", u"''").replace(u'\\',u'\\\\')
+    return text.replace("'", "''").replace('\\','\\\\')
+
 
 def get_sources():
     conn = get_dbconn()
@@ -147,7 +149,7 @@ def fetch_osm_data(type, id, full=True):
     if type == "way" and full:
         elem_url = os.path.join(elem_url, "full")
     try:
-        elem_io = urllib2.urlopen(elem_url)
+        elem_io = urllib.request.urlopen(elem_url)
         osm_read = OsmSax.OsmSaxReader(elem_io)
         return osm_read
     except:

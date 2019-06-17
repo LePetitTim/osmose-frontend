@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import utils, query_meta, commands, sys, os
+import utils, query_meta, subprocess, sys, os
 #import commands, sys
 #sys.path.append("../cgi-src")
 #from index import menu_groupes, menu_autres
@@ -161,16 +161,16 @@ if __name__ == "__main__":
 
 
     marker_folder = os.path.join("..", "static", "images", "markers")
-    commands.getstatusoutput("rm %s"%os.path.join(marker_folder,"*.png"))
+    subprocess.getstatusoutput("rm %s"%os.path.join(marker_folder,"*.png"))
     css = "/* sprite-loader-enable */\n"
     for i in all_items:
-        print i
+        print(i)
         for m in "LB":
             file_svg = os.path.join(marker_folder, "marker-%s-%d.svg"%(m.lower(), i["item"]))
             file_png = os.path.join(marker_folder, "marker-%s-%d.png"%(m.lower(), i["item"]))
             open(file_svg,"w").write(get_marker(m, i["marker_flag"], i["marker_color"]))
             #commands.getstatusoutput("rsvg %s %s"%(file_svg, file_png))
-            commands.getstatusoutput("rsvg-convert %s > %s"%(file_svg, file_png))
+            subprocess.getstatusoutput("rsvg-convert %s > %s"%(file_svg, file_png))
         css += ".marker-l-{0} {{ background-image: url(marker-l-{0}.png); }}\n".format(i["item"])
     open(os.path.join(marker_folder, "markers-l.css"), "w").write(css)
-    commands.getstatusoutput("rm %s"%os.path.join(marker_folder,"*.svg"))
+    subprocess.getstatusoutput("rm %s"%os.path.join(marker_folder,"*.svg"))

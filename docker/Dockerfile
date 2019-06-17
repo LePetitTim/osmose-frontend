@@ -1,4 +1,4 @@
-FROM python:2.7
+FROM python:3.6
 MAINTAINER Frédéric Rodrigo <fred.rodrigo@gmail.com>
 
 RUN useradd -s /bin/bash -d /data/work/osmose osmose
@@ -31,7 +31,7 @@ RUN /etc/init.d/postgresql start && \
 # Osmose Frontend
 USER root
 ADD ./requirements.txt /data/project/osmose/frontend/requirements.txt
-RUN virtualenv --python=python2.7 osmose-frontend-venv && \
+RUN virtualenv --python=python3.6 osmose-frontend-venv && \
     . osmose-frontend-venv/bin/activate && \
     pip install -r requirements.txt
 

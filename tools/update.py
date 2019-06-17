@@ -20,7 +20,7 @@
 ##                                                                       ##
 ###########################################################################
 
-import sys, os, time, urllib, tempfile, commands
+import sys, os, time, urllib.request, urllib.parse, urllib.error, tempfile, subprocess
 import psycopg2
 import utils
 import socket
@@ -33,7 +33,7 @@ show = utils.show
 
 class printlogger:
     def log(self, text):
-        print text
+        print(text)
 
 ###########################################################################
 ## updater
@@ -52,11 +52,11 @@ def execute_sql(dbcurs, sql, args = None):
         else:
             dbcurs.execute(sql, args)
     except:
-        print sql, args
+        print(sql, args)
         raise
     num_sql_run += 1
     if num_sql_run % 10000 == 0:
-        print ".",
+        print(".", end=' ')
         sys.stdout.flush()
 
 def update(source_id, fname, logger = printlogger(), remote_ip=""):
@@ -187,35 +187,35 @@ class update_parser(handler.ContentHandler):
         self.locator = locator
 
     def startElement(self, name, attrs):
-        if name == u"analyser":
+        if name == "analyser":
             self.mode = "analyser"
             self.update_timestamp(attrs)
 
-        elif name == u"analyserChange":
+        elif name == "analyserChange":
             self.mode = "analyserChange"
             self.update_timestamp(attrs)
 
-        elif name == u"error":
+        elif name == "error":
             self._class_id        = int(attrs["class"])
-            self._class_sub       = int(attrs.get("subclass", u"0"))%2147483647
+            self._class_sub       = int(attrs.get("subclass", "0"))%2147483647
             self._error_elements  = []
             self._error_locations = []
             self._error_texts     = {}
             self._users           = []
             self._fixes           = []
             self.elem_mode        = "info"
-        elif name == u"location":
+        elif name == "location":
             self._error_locations.append(dict(attrs))
-        elif name == u"text":
+        elif name == "text":
             self._error_texts[attrs["lang"]] = attrs["value"].replace("\n", "%%")
 
-        elif name in [u"node", u"way", u"relation", u"infos"]:
+        elif name in ["node", "way", "relation", "infos"]:
             self._elem = dict(attrs)
             if "user" in self._elem:
                 self._users.append(self._elem["user"])
             else:
                 self._elem["user"] = None
-            self._elem[u"type"] = name
+            self._elem["type"] = name
             self._elem_tags = {}
 
             if self.elem_mode == "fix":
@@ -223,7 +223,7 @@ class update_parser(handler.ContentHandler):
                 self._fix_modify = {}
                 self._fix_delete = []
 
-        elif name == u"tag":
+        elif name == "tag":
             if self.elem_mode == "info":
                self._elem_tags[attrs["k"]] = attrs["v"]
             elif self.elem_mode == "fix":
@@ -235,7 +235,7 @@ class update_parser(handler.ContentHandler):
                   self._fix_delete.append(attrs["k"])
 
 
-        elif name == u"class":
+        elif name == "class":
             self._class_id    = int(attrs["id"])
             self._class_item[self._class_id] = int(attrs["item"])
             if "level" in attrs:
@@ -248,9 +248,9 @@ class update_parser(handler.ContentHandler):
             else:
                 self._class_tags = []
 
-        elif name == u"classtext":
+        elif name == "classtext":
             self._class_texts[attrs["lang"]] = attrs["title"]
-        elif name == u"delete":
+        elif name == "delete":
             # used by files generated with an .osc file
             execute_sql(self._dbcurs, """DELETE FROM marker
                                     WHERE source = %s AND id IN
@@ -258,28 +258,28 @@ class update_parser(handler.ContentHandler):
                                            WHERE data_type = %s AND id = %s)""",
                                  (self._source_id, attrs["type"][0].upper(), attrs["id"]))
 
-        elif name == u"fixes":
+        elif name == "fixes":
             self.elem_mode = "fix"
-        elif name == u"fix":
+        elif name == "fix":
             self._fix = []
             self._fix_create = {}
             self._fix_modify = {}
             self._fix_delete = []
 
     def endElement(self, name):
-        if name == u"error":
+        if name == "error":
             ## build all_elem
-            all_elem   = u""
+            all_elem   = ""
             for e in self._error_elements:
-                all_elem  += e[u"type"] + e[u"id"] + "_"
+                all_elem  += e["type"] + e["id"] + "_"
             all_elem  = all_elem.rstrip("_")
 
             ## sql template
-            sql_marker = u"INSERT INTO marker (source, class, subclass, item, lat, lon, elems, subtitle) VALUES (" + "%s," * 7 + "%s) RETURNING id;"
+            sql_marker = "INSERT INTO marker (source, class, subclass, item, lat, lon, elems, subtitle) VALUES (" + "%s," * 7 + "%s) RETURNING id;"
 
             ## add data at all location
             if len(self._error_locations) == 0:
-                print "No location on error found on line %d" % self.locator.getLineNumber()
+                print("No location on error found on line %d" % self.locator.getLineNumber())
                 return
 
             cpt = 0
@@ -299,7 +299,7 @@ class update_parser(handler.ContentHandler):
                 marker_id = self._dbcurs.fetchone()[0]
 
             ## add all elements
-            sql_elem = u"INSERT INTO marker_elem (marker_id, elem_index, data_type, id, tags, username) VALUES (" + "%s, " * 5 + "%s)"
+            sql_elem = "INSERT INTO marker_elem (marker_id, elem_index, data_type, id, tags, username) VALUES (" + "%s, " * 5 + "%s)"
             num = 0
             for elem in self._error_elements:
                 if elem["type"] in ("node", "way", "relation"):
@@ -314,7 +314,7 @@ class update_parser(handler.ContentHandler):
                     num += 1
 
             ## add quickfixes
-            sql_fix = u"INSERT INTO marker_fix (marker_id, diff_index, elem_data_type, elem_id, tags_create, tags_modify, tags_delete) VALUES (" + "%s, " * 6 + "%s)"
+            sql_fix = "INSERT INTO marker_fix (marker_id, diff_index, elem_data_type, elem_id, tags_create, tags_modify, tags_delete) VALUES (" + "%s, " * 6 + "%s)"
             num = 0
             for fix in self._fixes:
                 for elem in fix:
@@ -325,17 +325,17 @@ class update_parser(handler.ContentHandler):
                 num += 1
 
 
-        elif name in [u"node", u"way", u"relation", u"infos"]:
+        elif name in ["node", "way", "relation", "infos"]:
             if self.elem_mode == "info":
-                self._elem[u"tag"] = self._elem_tags
+                self._elem["tag"] = self._elem_tags
                 self._error_elements.append(self._elem)
             else:
-                self._elem[u"tags_create"] = self._fix_create
-                self._elem[u"tags_modify"] = self._fix_modify
-                self._elem[u"tags_delete"] = self._fix_delete
+                self._elem["tags_create"] = self._fix_create
+                self._elem["tags_modify"] = self._fix_modify
+                self._elem["tags_delete"] = self._fix_delete
                 self._fix.append(self._elem)
 
-        elif name == u"class":
+        elif name == "class":
             keys = ["class", "item", "title", "level", "tags", "timestamp"]
             vals = [self._class_id,
                     self._class_item[self._class_id],
@@ -345,11 +345,11 @@ class update_parser(handler.ContentHandler):
                     utils.pg_escape(self.ts),
                    ]
 
-            sql  = u"INSERT INTO class (" + u','.join(keys) + u") "
-            sql += u"VALUES (" + (u','.join(["%s"] * len(keys))) + u") "
-            sql += u"ON CONFLICT (item, class) DO "
-            sql += u"UPDATE SET " + (u', '.join(map(lambda k: '"' + k + '" = %s', keys[2:]))) + " "
-            sql += u"WHERE class.class = %s AND class.item = %s AND class.timestamp < %s;"
+            sql  = "INSERT INTO class (" + ','.join(keys) + ") "
+            sql += "VALUES (" + (','.join(["%s"] * len(keys))) + ") "
+            sql += "ON CONFLICT (item, class) DO "
+            sql += "UPDATE SET " + (', '.join(['"' + k + '" = %s' for k in keys[2:]])) + " "
+            sql += "WHERE class.class = %s AND class.item = %s AND class.timestamp < %s;"
             execute_sql(self._dbcurs, sql, vals + vals[2:] + vals[0:2] + [vals[-1]])
 
             keys = ["source", "class", "item", "timestamp"]
@@ -363,24 +363,24 @@ class update_parser(handler.ContentHandler):
 
                 execute_sql(self._dbcurs, "DELETE FROM dynpoi_class WHERE source = %s AND class = %s",
                                      (self._source_id, self._class_id))
-                sql  = u"INSERT INTO dynpoi_class (" + u','.join(keys) + u") "
-                sql += u"VALUES (" + (u','.join(["%s"] * len(keys))) + u");"
+                sql  = "INSERT INTO dynpoi_class (" + ','.join(keys) + ") "
+                sql += "VALUES (" + (','.join(["%s"] * len(keys))) + ");"
                 execute_sql(self._dbcurs, sql, vals)
 
             else:
-                sql  = u"UPDATE dynpoi_class SET " + (u' = %s, '.join(keys)) + u" = %s "
-                sql += u"WHERE source = %s AND class = %s;"
+                sql  = "UPDATE dynpoi_class SET " + (' = %s, '.join(keys)) + " = %s "
+                sql += "WHERE source = %s AND class = %s;"
                 ch_vals = vals + [self._source_id, self._class_id]
                 execute_sql(self._dbcurs, sql, ch_vals)
 
                 if self._dbcurs.rowcount == 0:
-                    sql  = u"INSERT INTO dynpoi_class (" + u','.join(keys) + u") "
-                    sql += u"VALUES (" + (u','.join(["%s"] * len(keys))) + u");"
+                    sql  = "INSERT INTO dynpoi_class (" + ','.join(keys) + ") "
+                    sql += "VALUES (" + (','.join(["%s"] * len(keys))) + ");"
                     execute_sql(self._dbcurs, sql, vals)
 
-        elif name == u"fixes":
+        elif name == "fixes":
             self.elem_mode = "info"
-        elif name == u"fix":
+        elif name == "fix":
             self._fixes.append(self._fix)
 
     def update_timestamp(self, attrs):
@@ -402,7 +402,7 @@ class update_parser(handler.ContentHandler):
                                      (self._source_id, utils.pg_escape(self.ts)))
                 r = self._dbcurs.fetchone()
                 if r["count"] == 1:
-                    raise OsmoseUpdateAlreadyDone, "source=%s and timestamp=%s are already present" % (self._source_id, utils.pg_escape(self.ts))
+                    raise OsmoseUpdateAlreadyDone("source=%s and timestamp=%s are already present" % (self._source_id, utils.pg_escape(self.ts)))
                 else:
                     raise
 
@@ -425,15 +425,15 @@ class update_parser(handler.ContentHandler):
 ###########################################################################
 
 def print_source(source):
-    show(u"source #%s"%source["id"])
+    show("source #%s"%source["id"])
     for k in source:
         if k == "id":
             continue
         if type(source[k])== list:
             for e in source[k]:
-                show(u"   %-10s = %s"%(k, e))
+                show("   %-10s = %s"%(k, e))
         else:
-            show(u"   %-10s = %s"%(k, source[k]))
+            show("   %-10s = %s"%(k, source[k]))
 
 ###########################################################################
 import unittest
@@ -469,7 +469,7 @@ class Test(unittest.TestCase):
     def check_num_marker(self, num):
         self.dbcurs.execute("SELECT count(*) FROM marker")
         cur_num = self.dbcurs.fetchone()[0]
-        self.assertEquals(num, cur_num)
+        self.assertEqual(num, cur_num)
 
 
     def test(self):
@@ -508,10 +508,10 @@ class Test(unittest.TestCase):
 if __name__ == "__main__":
     sources = utils.get_sources()
     if len(sys.argv) == 1:
-        for k in sorted([int(x) for x in sources.keys()]):
+        for k in sorted([int(x) for x in list(sources.keys())]):
             source = sources[str(k)]
             print_source(source)
     elif sys.argv[1] == "--help":
-        show(u"usage: update.py <source number> <url>")
+        show("usage: update.py <source number> <url>")
     else:
         update(utils.get_sources()[sys.argv[1]], sys.argv[2])

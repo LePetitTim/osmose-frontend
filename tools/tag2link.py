@@ -24,8 +24,8 @@ class Exact(xml.sax.handler.ContentHandler):
             self.rules[-1]['conditions'].append({
                 'kk': attrs['k'],
                 'k':re.compile('^' + self.unposix(attrs['k']) + '$'),
-                'v': re.compile('^' + self.unposix(attrs['v']) + '$') if attrs.has_key('v') else None,
-                'id': attrs['id'] if attrs.has_key('id') else None
+                'v': re.compile('^' + self.unposix(attrs['v']) + '$') if 'v' in attrs else None,
+                'id': attrs['id'] if 'id' in attrs else None
             })
         elif name == 'link':
             link = attrs['href']
@@ -70,7 +70,7 @@ class tag2link:
             id = {}
             for condition in rule['conditions']:
                 match = False
-                for key in tags.keys():
+                for key in list(tags.keys()):
                     kmatch = condition['k'].match(key)
                     if kmatch:
                         tag = key
@@ -94,7 +94,7 @@ class tag2link:
                 replace = []
                 for sub in rule['link']['subs']:
                     for v in sub:
-                        if isinstance(v, basestring):
+                        if isinstance(v, str):
                             replace.append(v)
                             break
                         else:
@@ -112,13 +112,13 @@ class tag2link:
 
 if __name__ == '__main__':
     t2l = tag2link('tag2link_sources.xml')
-    print t2l.checkTags({'oneway':  'yes'})
-    print t2l.checkTags({'url': 'plop.com'})
-    print t2l.checkTags({'url': 'http://plop.com'})
-    print t2l.checkTags({'ref:UAI': '123'})
-    print t2l.checkTags({'man_made': 'survey_point', 'source': u'©IGN 2012', 'ref': '1234567 - A'})
-    print t2l.checkTags({'url': 'span://bad', 'man_made': 'survey_point', 'source': u'©IGN 2012', 'ref': '1234567 - A'})
-    print t2l.checkTags({'wikipedia:fr': 'toto'})
-    print t2l.checkTags({'wikipedia': 'fr:toto'})
-    print t2l.checkTags({'wikipedia': 'toto'})
-    print t2l.checkTags({'source': 'source', 'source:url': 'http://example.com'})
+    print(t2l.checkTags({'oneway':  'yes'}))
+    print(t2l.checkTags({'url': 'plop.com'}))
+    print(t2l.checkTags({'url': 'http://plop.com'}))
+    print(t2l.checkTags({'ref:UAI': '123'}))
+    print(t2l.checkTags({'man_made': 'survey_point', 'source': '©IGN 2012', 'ref': '1234567 - A'}))
+    print(t2l.checkTags({'url': 'span://bad', 'man_made': 'survey_point', 'source': '©IGN 2012', 'ref': '1234567 - A'}))
+    print(t2l.checkTags({'wikipedia:fr': 'toto'}))
+    print(t2l.checkTags({'wikipedia': 'fr:toto'}))
+    print(t2l.checkTags({'wikipedia': 'toto'}))
+    print(t2l.checkTags({'source': 'source', 'source:url': 'http://example.com'}))

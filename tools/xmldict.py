@@ -13,7 +13,7 @@ def xml_to_dict(root_or_str, strict=True):
 
     """
     root = root_or_str
-    if isinstance(root, str) or isinstance(root, unicode):
+    if isinstance(root, str) or isinstance(root, str):
         import xml.etree.cElementTree as ElementTree
         root = ElementTree.XML(root_or_str)
     return {root.tag: _from_xml(root, strict)}
@@ -49,7 +49,7 @@ def _extract_attrs(els):
     """
     if not isinstance(els, dict):
         return ''
-    return ''.join(' %s="%s"' % (key[1:], value) for key, value in els.iteritems()
+    return ''.join(' %s="%s"' % (key[1:], value) for key, value in els.items()
                    if key.startswith('@'))
 
 def _dict_to_xml(els):
@@ -62,7 +62,7 @@ def _dict_to_xml(els):
         return '<%s%s>%s%s</%s>' % (tag, attrs, _to_xml(content), text, tag)
 
     tags = []
-    for tag, content in els.iteritems():
+    for tag, content in els.items():
         # Text and attributes
         if tag.startswith('@') or tag == '#text':
             continue
@@ -107,10 +107,10 @@ def _from_xml(el, strict):
                 # First element with this tag
                 val[tag] = v
 
-    attribs = el.items()
+    attribs = list(el.items())
     # An element with attributes.
     if attribs and strict:
-        val.update(dict(('@%s' % k, v) for k, v in dict(attribs).iteritems()))
+        val.update(dict(('@%s' % k, v) for k, v in dict(attribs).items()))
         if el.text:
             converted = _val_and_maybe_convert(el)
             val['#text'] = el.text

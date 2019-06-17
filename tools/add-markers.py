@@ -35,12 +35,12 @@ if __name__ == "__main__":
   #  print "possible flags:", avail_flags
 
     if len(avail_flags) == 0:
-      print "not enough available flags for item=%d" % i
+      print("not enough available flags for item=%d" % i)
       continue
 
   #  en = raw_input("English: ")
   #  fr = raw_input("French: ")
 
-    print "insert into dynpoi_item values (%d, %d, '%s', '%s', NULL, ARRAY[1, 2, 3]);" % (i, c, color, avail_flags[0].replace("'", "''"))
+    print("insert into dynpoi_item values (%d, %d, '%s', '%s', NULL, ARRAY[1, 2, 3]);" % (i, c, color, avail_flags[0].replace("'", "''")))
     avail_flags.remove(avail_flags[0])
 
